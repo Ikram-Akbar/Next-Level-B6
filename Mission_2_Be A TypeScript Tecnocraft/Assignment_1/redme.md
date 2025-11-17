@@ -1,4 +1,4 @@
-# TypeScript সংক্ষেপে
+# TypeScript Q & A
 
 ## ১. Interface ও Type-এর পার্থক্য
 
