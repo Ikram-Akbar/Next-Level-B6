@@ -15,6 +15,14 @@ const formatValue = <T>(value: T): T | null => {
   return null;
 };
 
+//2: 
+const getLength = (params: string | any[]): number => {
+    if (typeof params === "string" || Array.isArray(params)) {
+        return params.length;
+    }
+    return 0;
+};
+
 //7:
 const getUniqueValues = (param_1: number[], param_2: number[]): number[] => {
   let result:number[] = [];
