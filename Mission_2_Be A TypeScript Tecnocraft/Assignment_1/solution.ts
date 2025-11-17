@@ -23,6 +23,21 @@ const getLength = (params: string | any[]): number => {
     return 0;
 };
 
+//3:
+  class Person {
+    name: string;
+    age: number;
+
+    constructor(name: string, age: number) {
+      this.name = name;
+      this.age = age;
+    }
+
+    getDetails(): string {
+      return `'Name: ${this.name}, Age: ${this.age}'`;
+    }
+  }
+
 //7:
 const getUniqueValues = (param_1: number[], param_2: number[]): number[] => {
   let result:number[] = [];
