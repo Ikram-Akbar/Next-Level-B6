@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import http, { IncomingMessage, Server, ServerResponse } from "http";
 import path from "path";
+import appConfig from "./config";
 
 const server: Server = http.createServer(
   (req: IncomingMessage, res: ServerResponse) => {
@@ -20,6 +21,6 @@ const server: Server = http.createServer(
   }
 );
 
-server.listen(5000, ()=>{
-    console.log(`server is running : http://localhost:${5000}`);
+server.listen(appConfig.port, ()=>{
+    console.log(`server is running : http://localhost:${appConfig.port}`);
 });
