@@ -1,15 +1,15 @@
 import express, { Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
-import path from "path"
+import path from "path";
 
-dotenv.config({path:path.join(process.cwd(), ".env")})
+dotenv.config({ path: path.join(process.cwd(), ".env") });
 const app = express();
 const port = 5000;
 
 // PostgreSQL Connection
 const pool = new Pool({
-  connectionString:`${process.env.connection_string}`,
+  connectionString: `${process.env.cntionStr}`,
 });
 
 // Initialize DB
@@ -64,6 +64,74 @@ app.post("/post", (req: Request, res: Response) => {
     message: "Successfully !!",
     success: true,
   });
+});
+// USERS CRUD
+//POST API :
+app.post("/api/post", async (req: Request, res: Response) => {
+  try {
+    const { name, email } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and Email are required",
+      });
+    }
+    const result = await pool.query(
+      `INSERT INTO users(name, email) VALUES($1, $2) RETURNING *`,
+      [name, email]
+    );
+    res.status(201).json({
+      success: true,
+      message: "data inserted successfully",
+      data: result.rows[0],
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+//GET ALL USERS
+app.get("/api/users", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`SELECT * FROM users`);
+    res.status(200).json({
+      message: "Retrieved Users successfully",
+      data: result.rows,
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      details: err,
+    });
+  }
+});
+//GET SPECIFIC USER
+app.get("/api/users/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const { rows } = await pool.query(`SELECT * FROM users WHERE id=$1`, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Data not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Successfully Fetch User",
+      success: true,
+      data: rows[0],
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
 });
 
 // Start server
