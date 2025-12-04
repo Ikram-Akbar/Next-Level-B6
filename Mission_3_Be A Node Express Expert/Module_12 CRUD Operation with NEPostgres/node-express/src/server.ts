@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import path from "path";
@@ -52,8 +52,18 @@ initDB();
 // Middleware
 app.use(express.json());
 
+//custom middleware :
+const logger = (req: Request, res: Response, next: NextFunction) => {
+  console.log(
+    `\x1b[36m[${new Date().toISOString()}]\x1b[0m \x1b[32m${
+      req.method
+    }\x1b[0m - Path: ${req.path}`
+  );
+  next();
+};
+
 // Routes
-app.get("/", (req: Request, res: Response) => {
+app.get("/", logger, (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 
@@ -65,9 +75,11 @@ app.post("/post", (req: Request, res: Response) => {
     success: true,
   });
 });
+
 // USERS CRUD
+
 //POST API :
-app.post("/api/post", async (req: Request, res: Response) => {
+app.post("/api/users", async (req: Request, res: Response) => {
   try {
     const { name, email } = req.body;
     if (!name || !email) {
@@ -132,6 +144,91 @@ app.get("/api/users/:id", async (req: Request, res: Response) => {
       message: err.message,
     });
   }
+});
+//UPDATE USER BY ID
+app.put("/api/users/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const { name, email } = req.body;
+
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "name and email are required",
+      });
+    }
+
+    // Update Query with updated_at auto update
+    const query = `
+      UPDATE users 
+      SET name=$1, email=$2, updated_at=NOW()
+      WHERE id=$3
+      RETURNING *;
+    `;
+
+    const values = [name, email, id];
+    const { rows } = await pool.query(query, values);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+      data: rows[0],
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+//DELETE API
+app.delete("/api/users/:id", async (req: Request, res: Response) => {
+  try {
+    // Correct ID
+    const id = req.params.id;
+
+    // Check user exists
+    const check_user = await pool.query(`SELECT * FROM users WHERE id=$1`, [
+      id,
+    ]);
+
+    if (check_user.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Delete user
+    await pool.query(`DELETE FROM users WHERE id=$1`, [id]);
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+//NOT FOUND Route
+app.use((req: Request, res: Response) => {
+  return res.status(404).json({
+    success: false,
+    message: "Not Found",
+    path: req.path,
+  });
 });
 
 // Start server
